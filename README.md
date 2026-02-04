@@ -10,13 +10,13 @@ This project provides a user-friendly web interface for converting Markdown docu
 - Title page generation
 - Table of contents
 - Headers and footers with logos
-- Live preview
+- PDF preview
 - Syntax highlighting
 - Auto-save functionality
 
 ## Features
 
-- **Live Preview**: See your PDF as you type with instant updates
+- **PDF Preview**: Generate and preview PDFs in your browser before downloading
 - **Custom Branding**:
   - Company logo in header
   - Customer logo on title page
@@ -85,13 +85,13 @@ Based on [md-to-pdf](https://github.com/simonhaenisch/md-to-pdf) by Simon Hänis
 ### Changes from Original
 
 - Added Express-based web server with REST API
-- Created web UI with live PDF preview
+- Created web UI with in-browser PDF preview
 - Added dual logo support (company + customer)
 - Implemented custom header/footer templates
 - Added title page generation with customer branding
 - Added table of contents generation
 - Implemented browser localStorage for auto-save
-- Added real-time word count and status updates
+- Added word count and status updates
 
 ## License
 
