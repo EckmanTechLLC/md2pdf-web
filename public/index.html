@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown to PDF Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background: #34495e;
+            padding: 12px 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #2c3e50;
+        }
+
+        .toolbar-section {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding-right: 15px;
+            border-right: 1px solid #4a5f7f;
+        }
+
+        .toolbar-section:last-child {
+            border-right: none;
+        }
+
+        .toolbar label {
+            color: #ecf0f1;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-secondary {
+            background: #7f8c8d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #6c7a7b;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        select, input[type="text"] {
+            padding: 8px 12px;
+            border: 1px solid #4a5f7f;
+            border-radius: 4px;
+            background: #2c3e50;
+            color: white;
+            font-size: 13px;
+        }
+
+        input[type="text"] {
+            width: 200px;
+        }
+
+        input[type="text"]::placeholder {
+            color: #95a5a6;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        /* Checkbox styling */
+        .checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            color: #ecf0f1;
+            font-size: 13px;
+        }
+
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 10px;
+            padding: 10px;
+            background: #d0d0d0;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .panel-header {
+            background: #ecf0f1;
+            padding: 12px 20px;
+            border-bottom: 2px solid #bdc3c7;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        /* Left Panel - Editor */
+        .editor-panel {
+            background: white;
+        }
+
+        #markdownEditor {
+            flex: 1;
+            padding: 20px;
+            border: none;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            background: white;
+            color: black;
+        }
+
+        #markdownEditor:focus {
+            outline: none;
+        }
+
+        /* Right Panel - PDF Preview */
+        .preview-panel {
+            background: white;
+        }
+
+        .preview-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            overflow: auto;
+            background: #f5f5f5;
+        }
+
+        #pdfPreview {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+
+        .preview-empty {
+            text-align: center;
+            color: #7f8c8d;
+        }
+
+        .preview-empty-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        /* Status Messages */
+        .status-bar {
+            background: #34495e;
+            color: white;
+            padding: 8px 20px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-message {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Logo Preview */
+        .logo-preview {
+            max-height: 40px;
+            max-width: 150px;
+            object-fit: contain;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+                padding: 5px;
+                gap: 5px;
+            }
+
+            .editor-panel {
+                border-right: none;
+            }
+
+            .toolbar {
+                padding: 10px 15px;
+            }
+
+            .toolbar-section {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>📄 Markdown to PDF Converter</h1>
+        <div class="header-actions">
+            <button class="btn btn-success" id="updatePreviewBtn" disabled>🔄 Update Preview</button>
+            <button class="btn btn-primary" id="downloadBtn" disabled>⬇️ Download PDF</button>
+            <button class="btn btn-secondary" id="printBtn" disabled>🖨️ Print</button>
+        </div>
+    </div>
+
+    <!-- Toolbar Row 1 - File Operations -->
+    <div class="toolbar">
+        <div class="toolbar-section">
+            <div class="file-input-wrapper">
+                <button class="btn btn-secondary" id="loadFileBtn">📁 Load Markdown</button>
+                <input type="file" id="fileInput" accept=".md,.markdown">
+            </div>
+            <button class="btn btn-secondary" id="clearBtn">🗑️ Clear</button>
+        </div>
+
+        <div class="toolbar-section">
+            <div class="file-input-wrapper">
+                <button class="btn btn-secondary" id="uploadLogoBtn">🖼️ Company Logo</button>
+                <input type="file" id="logoInput" accept="image/*">
+            </div>
+            <img id="logoPreview" class="logo-preview hidden" alt="Logo">
+            <button class="btn btn-secondary" id="removeLogo" class="hidden">✖️</button>
+        </div>
+
+        <div class="toolbar-section">
+            <div class="file-input-wrapper">
+                <button class="btn btn-secondary" id="uploadCustomerLogoBtn">🖼️ Customer Logo</button>
+                <input type="file" id="customerLogoInput" accept="image/*">
+            </div>
+            <img id="customerLogoPreview" class="logo-preview hidden" alt="Customer Logo">
+            <button class="btn btn-secondary" id="removeCustomerLogo" class="hidden">✖️</button>
+        </div>
+
+        <div class="toolbar-section">
+            <input type="text" id="customerName" placeholder="Customer Name (optional)">
+            <input type="text" id="docTitle" placeholder="Document Title (optional)">
+        </div>
+    </div>
+
+    <!-- Toolbar Row 2 - PDF Options -->
+    <div class="toolbar">
+        <div class="toolbar-section">
+            <label class="checkbox-label">
+                <input type="checkbox" id="pageBreakSections">
+                <span>Page break on major sections</span>
+            </label>
+        </div>
+
+        <div class="toolbar-section">
+            <label class="checkbox-label">
+                <input type="checkbox" id="generateTOC">
+                <span>Generate Table of Contents</span>
+            </label>
+        </div>
+
+        <div class="toolbar-section">
+            <label class="checkbox-label">
+                <input type="checkbox" id="showHeaderFooter">
+                <span>Show header/footer (page #, title, date)</span>
+            </label>
+        </div>
+
+        <div class="toolbar-section">
+            <label class="checkbox-label">
+                <input type="checkbox" id="generateTitlePage">
+                <span>Generate title page</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Left Panel - Editor -->
+        <div class="panel editor-panel">
+            <div class="panel-header">Markdown Editor</div>
+            <textarea id="markdownEditor" placeholder="Paste or type your markdown here...
+
+# Example Heading
+## Subheading
+
+This is a paragraph with **bold** and *italic* text.
+
+- Bullet point 1
+- Bullet point 2
+
+**Task List:**
+- [ ] Task 1
+- [x] Task 2 (completed)
+
+1. Numbered list
+2. Another item
+
+| Column 1 | Column 2 |
+|----------|----------|
+| Data 1   | Data 2   |
+| Data 3   | Data 4   |
+
+```javascript
+// Code block
+console.log('Hello World');
+```"></textarea>
+        </div>
+
+        <!-- Right Panel - PDF Preview -->
+        <div class="panel preview-panel">
+            <div class="panel-header">PDF Preview</div>
+            <div class="preview-container" id="previewContainer">
+                <div class="preview-empty">
+                    <div class="preview-empty-icon">📄</div>
+                    <p>No preview yet</p>
+                    <p style="font-size: 12px; margin-top: 5px;">Enter markdown text and click "Update Preview"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-message" id="statusMessage">
+            <span>Ready</span>
+        </div>
+        <div id="wordCount">0 words</div>
+    </div>
+
+    <script>
+        // Elements
+        const markdownEditor = document.getElementById('markdownEditor');
+        const loadFileBtn = document.getElementById('loadFileBtn');
+        const fileInput = document.getElementById('fileInput');
+        const uploadLogoBtn = document.getElementById('uploadLogoBtn');
+        const logoInput = document.getElementById('logoInput');
+        const logoPreview = document.getElementById('logoPreview');
+        const removeLogo = document.getElementById('removeLogo');
+        const uploadCustomerLogoBtn = document.getElementById('uploadCustomerLogoBtn');
+        const customerLogoInput = document.getElementById('customerLogoInput');
+        const customerLogoPreview = document.getElementById('customerLogoPreview');
+        const removeCustomerLogo = document.getElementById('removeCustomerLogo');
+        const clearBtn = document.getElementById('clearBtn');
+        const updatePreviewBtn = document.getElementById('updatePreviewBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const printBtn = document.getElementById('printBtn');
+        const previewContainer = document.getElementById('previewContainer');
+        const statusMessage = document.getElementById('statusMessage');
+        const wordCount = document.getElementById('wordCount');
+        const customerName = document.getElementById('customerName');
+        const docTitle = document.getElementById('docTitle');
+        const pageBreakSections = document.getElementById('pageBreakSections');
+        const generateTOC = document.getElementById('generateTOC');
+        const showHeaderFooter = document.getElementById('showHeaderFooter');
+        const generateTitlePage = document.getElementById('generateTitlePage');
+
+        let currentPdfUrl = null;
+        let logoFile = null;
+        let customerLogoFile = null;
+
+        // Auto-save to localStorage
+        function saveToLocalStorage() {
+            const state = {
+                markdown: markdownEditor.value,
+                customerName: customerName.value,
+                docTitle: docTitle.value,
+                pageBreakSections: pageBreakSections.checked,
+                generateTOC: generateTOC.checked,
+                showHeaderFooter: showHeaderFooter.checked,
+                generateTitlePage: generateTitlePage.checked,
+                companyLogo: logoPreview.src || null,
+                customerLogo: customerLogoPreview.src || null
+            };
+            localStorage.setItem('md2pdf_state', JSON.stringify(state));
+        }
+
+        // Load from localStorage
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('md2pdf_state');
+            if (!saved) return;
+
+            try {
+                const state = JSON.parse(saved);
+
+                // Restore text fields
+                if (state.markdown) {
+                    markdownEditor.value = state.markdown;
+                    updatePreviewBtn.disabled = false;
+                }
+                if (state.customerName) customerName.value = state.customerName;
+                if (state.docTitle) docTitle.value = state.docTitle;
+
+                // Restore checkboxes
+                pageBreakSections.checked = state.pageBreakSections || false;
+                generateTOC.checked = state.generateTOC || false;
+                showHeaderFooter.checked = state.showHeaderFooter || false;
+                generateTitlePage.checked = state.generateTitlePage || false;
+
+                // Restore company logo
+                if (state.companyLogo) {
+                    logoPreview.src = state.companyLogo;
+                    logoPreview.classList.remove('hidden');
+                    removeLogo.classList.remove('hidden');
+                    // Convert data URL back to File object
+                    fetch(state.companyLogo)
+                        .then(res => res.blob())
+                        .then(blob => {
+                            logoFile = new File([blob], 'company-logo.png', { type: blob.type });
+                        });
+                }
+
+                // Restore customer logo
+                if (state.customerLogo) {
+                    customerLogoPreview.src = state.customerLogo;
+                    customerLogoPreview.classList.remove('hidden');
+                    removeCustomerLogo.classList.remove('hidden');
+                    // Convert data URL back to File object
+                    fetch(state.customerLogo)
+                        .then(res => res.blob())
+                        .then(blob => {
+                            customerLogoFile = new File([blob], 'customer-logo.png', { type: blob.type });
+                        });
+                }
+
+                updateWordCount();
+                setStatus('Previous session restored');
+            } catch (error) {
+                console.error('Failed to restore session:', error);
+            }
+        }
+
+        // Debounced auto-save (wait 1 second after last change)
+        let autoSaveTimeout;
+        function autoSave() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(saveToLocalStorage, 1000);
+        }
+
+        // Trigger file input clicks
+        loadFileBtn.addEventListener('click', () => fileInput.click());
+        uploadLogoBtn.addEventListener('click', () => logoInput.click());
+        uploadCustomerLogoBtn.addEventListener('click', () => customerLogoInput.click());
+
+        // Load markdown file
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                markdownEditor.value = e.target.result;
+                updatePreviewBtn.disabled = false;
+                updateWordCount();
+                setStatus('File loaded');
+            };
+            reader.readAsText(file);
+        });
+
+        // Logo upload
+        logoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            logoFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                logoPreview.src = e.target.result;
+                logoPreview.classList.remove('hidden');
+                removeLogo.classList.remove('hidden');
+                setStatus('Logo uploaded');
+                autoSave();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Remove logo
+        removeLogo.addEventListener('click', () => {
+            logoFile = null;
+            logoPreview.src = '';
+            logoPreview.classList.add('hidden');
+            removeLogo.classList.add('hidden');
+            logoInput.value = '';
+            setStatus('Company logo removed');
+            autoSave();
+        });
+
+        // Customer logo upload
+        customerLogoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            customerLogoFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                customerLogoPreview.src = e.target.result;
+                customerLogoPreview.classList.remove('hidden');
+                removeCustomerLogo.classList.remove('hidden');
+                setStatus('Customer logo uploaded');
+                autoSave();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Remove customer logo
+        removeCustomerLogo.addEventListener('click', () => {
+            customerLogoFile = null;
+            customerLogoPreview.src = '';
+            customerLogoPreview.classList.add('hidden');
+            removeCustomerLogo.classList.add('hidden');
+            customerLogoInput.value = '';
+            setStatus('Customer logo removed');
+            autoSave();
+        });
+
+        // Clear editor
+        clearBtn.addEventListener('click', () => {
+            if (markdownEditor.value && !confirm('Clear all content and saved data?')) return;
+            markdownEditor.value = '';
+            customerName.value = '';
+            docTitle.value = '';
+            logoFile = null;
+            customerLogoFile = null;
+            logoPreview.src = '';
+            logoPreview.classList.add('hidden');
+            removeLogo.classList.add('hidden');
+            customerLogoPreview.src = '';
+            customerLogoPreview.classList.add('hidden');
+            removeCustomerLogo.classList.add('hidden');
+            logoInput.value = '';
+            customerLogoInput.value = '';
+            pageBreakSections.checked = false;
+            generateTOC.checked = false;
+            showHeaderFooter.checked = false;
+            generateTitlePage.checked = false;
+            updatePreviewBtn.disabled = true;
+            updateWordCount();
+            localStorage.removeItem('md2pdf_state');
+            setStatus('All data cleared');
+        });
+
+        // Enable update button on text change
+        markdownEditor.addEventListener('input', () => {
+            updatePreviewBtn.disabled = markdownEditor.value.trim() === '';
+            updateWordCount();
+            autoSave();
+        });
+
+        // Auto-save on all input changes
+        customerName.addEventListener('input', autoSave);
+        docTitle.addEventListener('input', autoSave);
+        pageBreakSections.addEventListener('change', autoSave);
+        generateTOC.addEventListener('change', autoSave);
+        showHeaderFooter.addEventListener('change', autoSave);
+        generateTitlePage.addEventListener('change', autoSave);
+
+        // Update word count
+        function updateWordCount() {
+            const text = markdownEditor.value.trim();
+            const words = text ? text.split(/\s+/).length : 0;
+            wordCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
+        }
+
+        // Update preview
+        updatePreviewBtn.addEventListener('click', async () => {
+            const markdown = markdownEditor.value.trim();
+            if (!markdown) return;
+
+            updatePreviewBtn.disabled = true;
+            setStatus('<span class="spinner"></span> Converting to PDF...', true);
+
+            const formData = new FormData();
+            formData.append('markdown', new Blob([markdown], { type: 'text/plain' }), 'document.md');
+            formData.append('customerName', customerName.value);
+            formData.append('docTitle', docTitle.value);
+            formData.append('pageBreakSections', pageBreakSections.checked);
+            formData.append('generateTOC', generateTOC.checked);
+            formData.append('showHeaderFooter', showHeaderFooter.checked);
+            formData.append('generateTitlePage', generateTitlePage.checked);
+
+            if (logoFile) {
+                formData.append('logo', logoFile);
+            }
+
+            if (customerLogoFile) {
+                formData.append('customerLogo', customerLogoFile);
+            }
+
+            try {
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Conversion failed');
+                }
+
+                // Get PDF blob and create URL
+                const blob = await response.blob();
+
+                // Revoke old URL
+                if (currentPdfUrl) {
+                    URL.revokeObjectURL(currentPdfUrl);
+                }
+
+                currentPdfUrl = URL.createObjectURL(blob);
+
+                // Show PDF in iframe
+                previewContainer.innerHTML = `<iframe id="pdfPreview" src="${currentPdfUrl}"></iframe>`;
+
+                downloadBtn.disabled = false;
+                printBtn.disabled = false;
+                setStatus('✓ Preview updated');
+
+            } catch (error) {
+                setStatus(`✗ Error: ${error.message}`);
+            } finally {
+                updatePreviewBtn.disabled = false;
+            }
+        });
+
+        // Download PDF
+        downloadBtn.addEventListener('click', () => {
+            if (!currentPdfUrl) return;
+
+            let filename = 'document.pdf';
+            if (docTitle.value) {
+                filename = docTitle.value.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.pdf';
+            } else if (customerName.value) {
+                filename = customerName.value.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.pdf';
+            }
+
+            const a = document.createElement('a');
+            a.href = currentPdfUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setStatus('PDF downloaded');
+        });
+
+        // Print PDF
+        printBtn.addEventListener('click', () => {
+            const iframe = document.getElementById('pdfPreview');
+            if (iframe) {
+                iframe.contentWindow.print();
+            }
+        });
+
+        // Status helper
+        function setStatus(message, isHtml = false) {
+            if (isHtml) {
+                statusMessage.innerHTML = message;
+            } else {
+                statusMessage.textContent = message;
+            }
+        }
+
+        // Initial word count and load saved state
+        updateWordCount();
+        loadFromLocalStorage();
+    </script>
+</body>
+</html>

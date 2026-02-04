@@ -1,0 +1,19 @@
+[Unit]
+Description=Markdown to PDF Converter Web Service
+After=network.target
+
+[Service]
+Type=simple
+User=etl
+WorkingDirectory=/home/etl/projects/md2pdf
+ExecStart=/usr/bin/node /home/etl/projects/md2pdf/server.js
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Environment
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
